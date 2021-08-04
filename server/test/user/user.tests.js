@@ -76,7 +76,6 @@ describe("user management", () => {
       socket.emit("user:connect", { id: 3 }, async (res) => {
         if (!("error" in res)) return done(new Error("should not happen"));
         expect(res.error).to.eql("invalid payload");
-        console.log(res.details);
         expect(res.details).to.eql([
           {
             message: '"id" must be one of [1, 2]',
@@ -208,6 +207,63 @@ describe("user management", () => {
         expect(res.users).to.be.a("array");
         expect(res.users).to.eql([]);
         done();
+      });
+    });
+  });
+
+  describe("start game", function () {
+    it("should start the game", (done) => {
+      const partialDone = createPartialDone(4, done);
+      socket.on("game:start", (data) => {
+        expect(data.game).to.be.a("string");
+        expect(data.game).to.equal("start");
+        partialDone();
+      });
+
+      otherSocket.on("game:start", (data) => {
+        console.log("game started");
+        expect(data.game).to.be.a("string");
+        expect(data.game).to.equal("start");
+        partialDone();
+      });
+
+      socket.emit("user:connect", { id: 1 }, async (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        expect(res.data).to.be.a("number");
+        const storedUser = await userRepository.findById(res.data);
+        expect(storedUser).to.eql({ id: 1 });
+        partialDone();
+      });
+
+      otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        expect(res.data).to.be.a("number");
+        const storedUser = await userRepository.findById(res.data);
+        expect(storedUser).to.eql({ id: 2 });
+        partialDone();
+      });
+    });
+    it("should not start the game", (done) => {
+      const partialDone = createPartialDone(2, done);
+      socket.on("game:start", (data) => {
+        done(new Error("should not happen"));
+      });
+
+      otherSocket.on("game:start", (data) => {
+        done(new Error("should not happen"));
+      });
+
+      otherSocket.on("user:connected", (user) => {
+        expect(user.id).to.be.a("number");
+        partialDone();
+      });
+
+      socket.emit("user:connect", { id: 1 }, async (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        expect(res.data).to.be.a("number");
+        const storedUser = await userRepository.findById(res.data);
+        expect(storedUser).to.eql({ id: 1 });
+        partialDone();
       });
     });
   });
