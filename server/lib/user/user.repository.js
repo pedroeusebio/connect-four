@@ -20,7 +20,7 @@ module.exports = class InMemoryUserRepository {
 
   disconnectById(id) {
     const deleted = this.users.delete(id);
-    if (deleted) return Promise.resolve(true);
+    if (deleted) return Promise.resolve({ user: id });
     return Promise.reject("user not found");
   }
 };
