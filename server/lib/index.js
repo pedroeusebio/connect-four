@@ -6,16 +6,10 @@ const InMemoryUserRepository = require("./user/user.repository");
 
 const httpServer = createServer();
 
-createApplication(
-  httpServer,
-  {
-    userRepository: new InMemoryUserRepository(),
+createApplication(httpServer, {
+  cors: {
+    origin: ["http://localhost:4200"],
   },
-  {
-    cors: {
-      origin: ["http://localhost:4200"],
-    },
-  }
-);
+});
 
 httpServer.listen(port);

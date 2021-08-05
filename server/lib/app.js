@@ -1,18 +1,23 @@
 const { Server } = require("socket.io");
-const createUserHandlers = require("./user/user.handlers");
 const EventEmitter = require("events");
 
-module.exports = function createApplication(
-  httpServer,
-  components,
-  serverOptions = {}
-) {
+const createUserHandlers = require("./user/user.handlers");
+const createGameHandlers = require("./game/game.handlers");
+const InMemoryUserRepository = require("./user/user.repository");
+const InMemoryGameRepository = require("./game/game.repository");
+
+module.exports = function createApplication(httpServer, serverOptions = {}) {
   const io = new Server(httpServer, serverOptions);
   const eventEmitter = new EventEmitter();
-  const state = { gameEnabled: false };
+  const components = {
+    userRepository: new InMemoryUserRepository(),
+    gameRepository: new InMemoryGameRepository(),
+  };
 
   const { connectUser, disconnectUser, findAllUser, checkAllConnectedUsers } =
-    createUserHandlers(components, eventEmitter, state);
+    createUserHandlers(components, eventEmitter);
+
+  const { startGame, endGame } = createGameHandlers(components, eventEmitter);
 
   io.on("connection", (socket) => {
     socket.on("user:connect", connectUser);
@@ -24,9 +29,13 @@ module.exports = function createApplication(
     return checkAllConnectedUsers(io);
   });
 
-  eventEmitter.on("user:disconnected", function () {
-    return checkAllConnectedUsers(io);
+  eventEmitter.on("game:start", function () {
+    return startGame(io);
   });
 
-  return io;
+  eventEmitter.on("game:end", function () {
+    return endGame(io);
+  });
+
+  return { io, components };
 };

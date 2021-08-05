@@ -5,8 +5,8 @@ const userSchema = Joi.object().keys({
   id: Joi.number().valid(1, 2).required(),
 });
 
-module.exports = function (components, eventEmitter, state) {
-  const { userRepository } = components;
+module.exports = function (components, eventEmitter) {
+  const { userRepository, gameRepository } = components;
 
   return {
     connectUser: async function (payload, callback) {
@@ -62,11 +62,9 @@ module.exports = function (components, eventEmitter, state) {
     checkAllConnectedUsers: async function (io) {
       const users = await userRepository.findAll();
       if (users.length == 2) {
-        state.gameEnabled = true;
-        io.emit("game:enable", { game: "enable" });
-      } else if (state.gameEnabled) {
-        state.gameEnabled = false;
-        io.emit("game:disable", { game: "disable" });
+        eventEmitter.emit("game:start");
+      } else if (gameRepository.isStarted()) {
+        eventEmitter.emit("game:end");
       }
     },
   };

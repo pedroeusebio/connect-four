@@ -3,17 +3,8 @@ const { expect } = require("chai");
 const { AddressInfo } = require("net");
 const { io, Socket } = require("socket.io-client");
 
+const { createPartialDone } = require("../utils");
 const createApplication = require("../../lib/app");
-const InMemoryUserRepository = require("../../lib/user/user.repository");
-
-const createPartialDone = (count, done) => {
-  let i = 0;
-  return () => {
-    if (++i === count) {
-      done();
-    }
-  };
-};
 
 describe("user management", () => {
   let httpServer, socket, otherSocket, userRepository;
@@ -21,9 +12,8 @@ describe("user management", () => {
   beforeEach((done) => {
     const partialDone = createPartialDone(2, done);
     httpServer = createServer();
-    userRepository = new InMemoryUserRepository();
-    createApplication(httpServer, { userRepository });
-
+    const { components } = createApplication(httpServer);
+    userRepository = components.userRepository;
     httpServer.listen(() => {
       const port = httpServer.address().port;
       socket = io(`http://localhost:${port}`);
@@ -207,156 +197,6 @@ describe("user management", () => {
         expect(res.users).to.be.a("array");
         expect(res.users).to.eql([]);
         done();
-      });
-    });
-  });
-
-  describe("enable game", function () {
-    it("should enable the game", (done) => {
-      const partialDone = createPartialDone(4, done);
-      socket.on("game:enable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("enable");
-        partialDone();
-      });
-
-      otherSocket.on("game:enable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("enable");
-        partialDone();
-      });
-
-      socket.emit("user:connect", { id: 1 }, async (res) => {
-        if ("error" in res) return done(new Error(res.error));
-        expect(res.data).to.be.a("number");
-        const storedUser = await userRepository.findById(res.data);
-        expect(storedUser).to.eql({ id: 1 });
-        partialDone();
-      });
-
-      otherSocket.emit("user:connect", { id: 2 }, async (res) => {
-        if ("error" in res) return done(new Error(res.error));
-        expect(res.data).to.be.a("number");
-        const storedUser = await userRepository.findById(res.data);
-        expect(storedUser).to.eql({ id: 2 });
-        partialDone();
-      });
-    });
-
-    it("should not enable the game", (done) => {
-      const partialDone = createPartialDone(2, done);
-      socket.on("game:enable", () => {
-        done(new Error("should not happen"));
-      });
-
-      otherSocket.on("game:enable", () => {
-        done(new Error("should not happen"));
-      });
-
-      otherSocket.on("user:connected", (user) => {
-        expect(user.id).to.be.a("number");
-        partialDone();
-      });
-
-      socket.emit("user:connect", { id: 1 }, async (res) => {
-        if ("error" in res) return done(new Error(res.error));
-        expect(res.data).to.be.a("number");
-        const storedUser = await userRepository.findById(res.data);
-        expect(storedUser).to.eql({ id: 1 });
-        partialDone();
-      });
-    });
-  });
-
-  describe("disable the game", () => {
-    it("should disable the game", (done) => {
-      const partialDone = createPartialDone(7, done);
-      socket.on("game:enable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("enable");
-        partialDone();
-      });
-
-      otherSocket.on("game:enable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("enable");
-        partialDone();
-      });
-      socket.on("game:disable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("disable");
-        partialDone();
-      });
-
-      otherSocket.on("game:disable", (data) => {
-        expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("disable");
-        partialDone();
-      });
-
-      new Promise((resolve, reject) => {
-        const partialResolve = createPartialDone(2, resolve);
-        socket.emit("user:connect", { id: 1 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          expect(res.data).to.be.a("number");
-          const storedUser = await userRepository.findById(res.data);
-          expect(storedUser).to.eql({ id: 1 });
-          partialDone();
-          partialResolve();
-        });
-        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          expect(res.data).to.be.a("number");
-          const storedUser = await userRepository.findById(res.data);
-          expect(storedUser).to.eql({ id: 2 });
-          partialDone();
-          partialResolve();
-        });
-      }).then(() => {
-        socket.emit("user:disconnect", { id: 1 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          expect(res.user).to.be.a("number");
-          expect(res.user).to.eql(1);
-          const storedUser = await userRepository
-            .findById(res.user)
-            .catch((e) => e);
-          expect(storedUser).to.be.a("string");
-          partialDone();
-        });
-      });
-    });
-
-    it("should not disable the game", (done) => {
-      const partialDone = createPartialDone(2, done);
-
-      socket.on("game:disable", () => {
-        done(new Error("should not happen"));
-      });
-
-      otherSocket.on("game:disable", () => {
-        done(new Error("should not happen"));
-      });
-
-      new Promise((resolve, reject) => {
-        socket.emit("user:connect", { id: 1 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          expect(res.data).to.be.a("number");
-          const storedUser = await userRepository.findById(res.data);
-          expect(storedUser).to.eql({ id: 1 });
-          partialDone();
-          resolve();
-        });
-      }).then(() => {
-        socket.emit("user:disconnect", { id: 1 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          expect(res.user).to.be.a("number");
-          expect(res.user).to.eql(1);
-          const storedUser = await userRepository
-            .findById(res.user)
-            .catch((e) => e);
-          expect(storedUser).to.be.a("string");
-          partialDone();
-        });
       });
     });
   });
