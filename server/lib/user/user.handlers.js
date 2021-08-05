@@ -5,7 +5,7 @@ const userSchema = Joi.object().keys({
   id: Joi.number().valid(1, 2).required(),
 });
 
-module.exports = function (components, eventEmitter) {
+module.exports = function (components, eventEmitter, state) {
   const { userRepository } = components;
 
   return {
@@ -51,6 +51,7 @@ module.exports = function (components, eventEmitter) {
       }
       callback({ ...result });
       socket.broadcast.emit("user:disconnected", value);
+      eventEmitter.emit("user:disconnected");
     },
 
     findAllUser: async function (payload, callback) {
@@ -60,7 +61,13 @@ module.exports = function (components, eventEmitter) {
 
     checkAllConnectedUsers: async function (io) {
       const users = await userRepository.findAll();
-      if (users.length == 2) io.emit("game:enable", { game: "enable" });
+      if (users.length == 2) {
+        state.gameEnabled = true;
+        io.emit("game:enable", { game: "enable" });
+      } else if (state.gameEnabled) {
+        state.gameEnabled = false;
+        io.emit("game:disable", { game: "disable" });
+      }
     },
   };
 };

@@ -9,9 +9,10 @@ module.exports = function createApplication(
 ) {
   const io = new Server(httpServer, serverOptions);
   const eventEmitter = new EventEmitter();
+  const state = { gameEnabled: false };
 
   const { connectUser, disconnectUser, findAllUser, checkAllConnectedUsers } =
-    createUserHandlers(components, eventEmitter);
+    createUserHandlers(components, eventEmitter, state);
 
   io.on("connection", (socket) => {
     socket.on("user:connect", connectUser);
@@ -20,6 +21,10 @@ module.exports = function createApplication(
   });
 
   eventEmitter.on("user:connected", function () {
+    return checkAllConnectedUsers(io);
+  });
+
+  eventEmitter.on("user:disconnected", function () {
     return checkAllConnectedUsers(io);
   });
 
