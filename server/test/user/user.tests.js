@@ -211,19 +211,18 @@ describe("user management", () => {
     });
   });
 
-  describe("start game", function () {
-    it("should start the game", (done) => {
+  describe("enable game", function () {
+    it("should enable the game", (done) => {
       const partialDone = createPartialDone(4, done);
-      socket.on("game:start", (data) => {
+      socket.on("game:enable", (data) => {
         expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("start");
+        expect(data.game).to.equal("enable");
         partialDone();
       });
 
-      otherSocket.on("game:start", (data) => {
-        console.log("game started");
+      otherSocket.on("game:enable", (data) => {
         expect(data.game).to.be.a("string");
-        expect(data.game).to.equal("start");
+        expect(data.game).to.equal("enable");
         partialDone();
       });
 
@@ -243,13 +242,14 @@ describe("user management", () => {
         partialDone();
       });
     });
-    it("should not start the game", (done) => {
+
+    it("should not enable the game", (done) => {
       const partialDone = createPartialDone(2, done);
-      socket.on("game:start", (data) => {
+      socket.on("game:enable", () => {
         done(new Error("should not happen"));
       });
 
-      otherSocket.on("game:start", (data) => {
+      otherSocket.on("game:enable", () => {
         done(new Error("should not happen"));
       });
 

@@ -60,7 +60,7 @@ module.exports = function (components, eventEmitter) {
 
     checkAllConnectedUsers: async function (io) {
       const users = await userRepository.findAll();
-      if (users.length == 2) io.emit("game:start", { game: "start" });
+      if (users.length == 2) io.emit("game:enable", { game: "enable" });
     },
   };
 };
