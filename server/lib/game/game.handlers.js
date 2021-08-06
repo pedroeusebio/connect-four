@@ -32,5 +32,25 @@ module.exports = function (components, state) {
         return io.emit("game:ended", { error: e });
       }
     },
+    resetGame: async function (payload, callback) {
+      const socket = this;
+      const { error } = userSchema.tailor("resetGame").validate(payload);
+
+      if (error)
+        return callback({
+          error: "invalid payload",
+          details: mapErrorDetails(error.details),
+        });
+
+      let result;
+      try {
+        result = await gameRepository.reset();
+      } catch (e) {
+        return callback({ error: e });
+      }
+
+      callback(result);
+      socket.broadcast.emit("game:reseted", result);
+    },
   };
 };

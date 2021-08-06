@@ -17,12 +17,17 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
   const { connectUser, disconnectUser, findAllUser, checkAllConnectedUsers } =
     createUserHandlers(components, eventEmitter);
 
-  const { startGame, endGame } = createGameHandlers(components, eventEmitter);
+  const { startGame, endGame, resetGame } = createGameHandlers(
+    components,
+    eventEmitter
+  );
 
   io.on("connection", (socket) => {
     socket.on("user:connect", connectUser);
     socket.on("user:disconnect", disconnectUser);
     socket.on("user:findAll", findAllUser);
+
+    socket.on("game:reset", resetGame);
   });
 
   eventEmitter.on("user:connected", function () {

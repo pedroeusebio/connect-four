@@ -109,7 +109,7 @@ describe("game management", () => {
         partialDone();
       });
 
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         const partialResolve = createPartialDone(2, resolve);
         socket.emit("user:connect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
@@ -140,7 +140,7 @@ describe("game management", () => {
         done(new Error("should not happen"));
       });
 
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         socket.emit("user:connect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
           expect(res.data).to.be.a("number");
@@ -152,6 +152,101 @@ describe("game management", () => {
           if ("error" in res) return done(new Error(res.error));
           expect(res.user).to.be.a("number");
           expect(res.user).to.eql(1);
+          partialDone();
+        });
+      });
+    });
+  });
+});
+
+describe("game states management", () => {
+  let httpServer, socket, otherSocket, gameRepository;
+  beforeEach((done) => {
+    const partialDone = createPartialDone(2, done);
+    httpServer = createServer();
+    const { components } = createApplication(httpServer);
+    gameRepository = components.gameRepository;
+    httpServer.listen(() => {
+      const port = httpServer.address().port;
+      socket = io(`http://localhost:${port}`);
+      new Promise((resolve) => socket.on("connect", resolve)).then(() => {
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialDone();
+        });
+      });
+
+      otherSocket = io(`http://localhost:${port}`);
+      new Promise((resolve) => otherSocket.on("connect", resolve)).then(() => {
+        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialDone();
+        });
+      });
+    });
+  });
+
+  afterEach(() => {
+    httpServer.close();
+    socket.disconnect();
+    otherSocket.disconnect();
+  });
+
+  describe("reset game", () => {
+    it("should reset the game", (done) => {
+      const partialDone = createPartialDone(2, done);
+      otherSocket.on("game:reseted", (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        expect(res.round).to.be.a("number");
+        expect(res.round).to.equal(1);
+        partialDone();
+      });
+
+      socket.emit("game:reset", { id: 1 }, (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        expect(res.round).to.be.a("number");
+        expect(res.round).to.equal(1);
+        partialDone();
+      });
+    });
+
+    it("should not reset the game with invalid payload", (done) => {
+      otherSocket.on("game:reseted", () => {
+        done(new Error("should not happen"));
+      });
+
+      socket.emit("game:reset", { id: 4 }, (res) => {
+        if (!("error" in res)) return done(new Error("should not happen"));
+        expect(res.error).to.eql("invalid payload");
+        expect(res.details).to.eql([
+          {
+            message: '"id" must be one of [1, 2]',
+            path: ["id"],
+            type: "any.only",
+          },
+        ]);
+        done();
+      });
+    });
+
+    it("should not reset the game with invalid payload", (done) => {
+      const partialDone = createPartialDone(2, done);
+      otherSocket.on("game:reseted", () => {
+        done(new Error("should not happen"));
+      });
+
+      new Promise((resolve) => {
+        socket.emit("user:disconnect", { id: 1 }, (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialDone();
+          resolve();
+        });
+      }).then(() => {
+        socket.emit("game:reset", { id: 1 }, (res) => {
+          console.log(res);
+          if (!("error" in res)) return done(new Error("should not happen"));
+          expect(res.error).to.be.a("string");
+          expect(res.error).to.equal("game not started yet");
           partialDone();
         });
       });
