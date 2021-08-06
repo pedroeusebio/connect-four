@@ -83,7 +83,7 @@ describe("user management", () => {
 
     it("should fail when two users connect with same id", (done) => {
       const partialDone = createPartialDone(3, done);
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         socket.emit("user:connect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error("should not happen"));
           expect(res.data).to.be.a("number");
@@ -114,7 +114,7 @@ describe("user management", () => {
   describe("disconnect user", () => {
     it("should disconnect a user", (done) => {
       const partialDone = createPartialDone(2, done);
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         socket.emit("user:connect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
           expect(res.data).to.be.a("number");
