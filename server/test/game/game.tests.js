@@ -243,7 +243,6 @@ describe("game states management", () => {
         });
       }).then(() => {
         socket.emit("game:reset", { id: 1 }, (res) => {
-          console.log(res);
           if (!("error" in res)) return done(new Error("should not happen"));
           expect(res.error).to.be.a("string");
           expect(res.error).to.equal("game not started yet");
@@ -251,5 +250,86 @@ describe("game states management", () => {
         });
       });
     });
+  });
+
+  describe("play game", () => {
+    it("should play a round", (done) => {
+      const partialDone = createPartialDone(2, done);
+      const expectedGrid = [
+        [".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", "."],
+        [1, ".", ".", ".", ".", "."],
+      ];
+
+      socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.round).to.be.a("number");
+        expect(res.round).to.equal(2);
+        expect(res.position).to.be.an("array");
+        expect(res.position).to.have.members([6, 0]);
+        expect(res.grid).to.be.an("array");
+        expect(res.grid).to.have.deep.members(expectedGrid);
+        partialDone();
+      });
+
+      otherSocket.on("game:played", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.round).to.be.a("number");
+        expect(res.round).to.equal(2);
+        expect(res.position).to.be.an("array");
+        expect(res.position).to.have.members([6, 0]);
+        expect(res.grid).to.be.an("array");
+        expect(res.grid).to.have.deep.members(expectedGrid);
+        partialDone();
+      });
+    });
+
+    it("should not play a round with invalid payload", (done) => {
+      socket.emit("game:play", { id: 1 }, (res) => {
+        if (!("error" in res)) return done(new Error("should not happen"));
+        expect(res.error).to.be.a("string");
+        expect(res.error).to.be.equal("invalid payload");
+        expect(res.details).to.eql([
+          {
+            message: '"column" is required',
+            path: ["column"],
+            type: "any.required",
+          },
+        ]);
+        done();
+      });
+      otherSocket.on("game:played", () => {
+        return done(new Error("should not happen"));
+      });
+    });
+
+    it("should not play a round with invalid player", (done) => {
+      otherSocket.emit("game:play", { id: 2, column: 0 }, (res) => {
+        if (!("error" in res)) return done(new Error("should not happen"));
+        expect(res.error).to.be.a("string");
+        expect(res.error).to.be.equal("it's not your turn");
+        done();
+      });
+      otherSocket.on("game:played", () => {
+        return done(new Error("should not happen"));
+      });
+    });
+
+    it("should not play a round with invalid column", (done) => {
+      otherSocket.emit("game:play", { id: 1, column: -1 }, (res) => {
+        if (!("error" in res)) return done(new Error("should not happen"));
+        expect(res.error).to.be.a("string");
+        expect(res.error).to.be.equal("invalid column");
+        done();
+      });
+      otherSocket.on("game:played", () => {
+        return done(new Error("should not happen"));
+      });
+    });
+
   });
 });

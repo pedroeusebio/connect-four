@@ -17,10 +17,8 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
   const { connectUser, disconnectUser, findAllUser, checkAllConnectedUsers } =
     createUserHandlers(components, eventEmitter);
 
-  const { startGame, endGame, resetGame } = createGameHandlers(
-    components,
-    eventEmitter
-  );
+  const { startGame, endGame, resetGame, dropDisc, checkRoundGame } =
+    createGameHandlers(components, eventEmitter);
 
   io.on("connection", (socket) => {
     socket.on("user:connect", connectUser);
@@ -28,6 +26,7 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
     socket.on("user:findAll", findAllUser);
 
     socket.on("game:reset", resetGame);
+    socket.on("game:play", dropDisc);
   });
 
   eventEmitter.on("user:connected", function () {
@@ -44,6 +43,10 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
 
   eventEmitter.on("game:end", function () {
     return endGame(io);
+  });
+
+  eventEmitter.on("game:checkRound", function () {
+    return checkRoundGame(io);
   });
 
   return { io, components };

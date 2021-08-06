@@ -19,31 +19,34 @@ module.exports = class InMemoryGameRepository {
     return this.players[this.playerIndex];
   }
 
+  checkIsplayerTurn(player) {
+    if (player == this.getPlayerRound())
+      return Promise.resolve(true);
+    return Promise.reject("it's not your turn");
+  }
+
   isStarted() {
     return Promise.resolve(this.started);
   }
 
   start() {
-    if (this.started)
-      return Promise.reject("game already started");
+    if (this.started) return Promise.reject("game already started");
     this.started = true;
     this.resetGrid();
-    return Promise.resolve({round: this.getPlayerRound()});
+    return Promise.resolve({ round: this.getPlayerRound() });
   }
 
   reset() {
-    if(!this.started)
-      return Promise.reject("game not started yet");
+    if (!this.started) return Promise.reject("game not started yet");
     this.resetGrid();
-    return Promise.resolve({round: this.getPlayerRound()});
+    return Promise.resolve({ round: this.getPlayerRound() });
   }
-   
+
   end() {
-    if(!this.started)
-      return Promise.reject("game not started yet");
+    if (!this.started) return Promise.reject("game not started yet");
     this.started = false;
     this.resetGrid();
-    return Promise.resolve({ended: true});
+    return Promise.resolve({ ended: true });
   }
 
   resetGrid() {
@@ -105,13 +108,16 @@ module.exports = class InMemoryGameRepository {
   drop(player, column) {
     if (!(column >= 0 && column < this.width))
       return Promise.reject("invalid column");
-    for (let h = this.width - 1; h >= 0; h--) {
-      if (this.grid[h][col] == ".") {
-        grid[h][column] = player;
+    for (let h = this.height - 1; h >= 0; h--) {
+      if (this.grid[h][column] == ".") {
+        this.grid[h][column] = player;
         this.lastCol = column;
         this.lastTop = h;
-        return Promise.resolve(true);
+        this.moves -= 1;
+        this.playerIndex = 1 - this.players.indexOf(player);
+        return Promise.resolve({ position: [h, column], grid: this.grid });
       }
     }
+    return Promise.reject("invalid column");
   }
 };
