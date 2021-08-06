@@ -16,11 +16,11 @@ module.exports = class InMemoryGameRepository {
   }
 
   getPlayerRound() {
-    return this.playerIndex[this.playerIndex];
+    return this.players[this.playerIndex];
   }
 
   isStarted() {
-    return this.started;
+    return Promise.resolve(this.started);
   }
 
   start() {
@@ -39,15 +39,18 @@ module.exports = class InMemoryGameRepository {
   }
    
   end() {
+    if(!this.started)
+      return Promise.reject("game not started yet");
     this.started = false;
     this.resetGrid();
+    return Promise.resolve({ended: true});
   }
 
   resetGrid() {
     let index = 0;
     this.grid = [];
     while (index < this.height) {
-      this.grid.append(new Array(this.width).fill("."));
+      this.grid.push(new Array(this.width).fill("."));
       index += 1;
     }
     this.playerIndex = 0;

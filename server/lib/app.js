@@ -29,6 +29,10 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
     return checkAllConnectedUsers(io);
   });
 
+  eventEmitter.on("user:disconnected", function () {
+    return checkAllConnectedUsers(io);
+  });
+
   eventEmitter.on("game:start", function () {
     return startGame(io);
   });

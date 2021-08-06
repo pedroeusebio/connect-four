@@ -14,28 +14,23 @@ module.exports = function (components, state) {
   const { userRepository, gameRepository } = components;
 
   return {
-    startGame: async function (payload, callback) {
-      const socket = this;
-      const { error, value } = userSchema.tailor("connect").validate(payload);
-      if (error)
-        return callback({
-          error: "invalid payload",
-          details: mapErrorDetails(error.details),
-        });
-
-      let result;
+    startGame: async function (io) {
       try {
-        result = await gameRepository.start();
+        const result = await gameRepository.start();
+        return io.emit("game:started", result);
       } catch (e) {
-        return callback({ error: e });
+        return io.emit("game:started", { error: e });
       }
-      callback(result);
-      socket.broadcast.emit("game:started", result);
     },
-    resetGame: async function (payload, callback) {
-      const socket = this;
-      if (!gameRepository.isStarted)
-        return callback({ error: "game not started yet" });
+    endGame: async function (io) {
+      if (!(await gameRepository.isStarted()))
+        return io.emit("game:ended", { error: "game not started yet" });
+      try {
+        const result = await gameRepository.end();
+        return io.emit("game:ended", result);
+      } catch (e) {
+        return io.emit("game:ended", { error: e });
+      }
     },
   };
 };

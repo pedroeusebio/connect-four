@@ -63,7 +63,7 @@ module.exports = function (components, eventEmitter) {
       const users = await userRepository.findAll();
       if (users.length == 2) {
         eventEmitter.emit("game:start");
-      } else if (gameRepository.isStarted()) {
+      } else if (await gameRepository.isStarted()) {
         eventEmitter.emit("game:end");
       }
     },
