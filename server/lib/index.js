@@ -8,7 +8,7 @@ const httpServer = createServer();
 
 createApplication(httpServer, {
   cors: {
-    origin: ["http://localhost:4200"],
+    origin: ["http://localhost:3000"],
   },
 });
 
