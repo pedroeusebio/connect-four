@@ -20,8 +20,7 @@ module.exports = class InMemoryGameRepository {
   }
 
   checkIsplayerTurn(player) {
-    if (player == this.getPlayerRound())
-      return Promise.resolve(true);
+    if (player == this.getPlayerRound()) return Promise.resolve(true);
     return Promise.reject("it's not your turn");
   }
 
@@ -60,7 +59,7 @@ module.exports = class InMemoryGameRepository {
   }
 
   horizontal() {
-    return this.grid[lasTop].join("");
+    return this.grid[this.lastTop].join("");
   }
 
   vertical() {
@@ -91,10 +90,14 @@ module.exports = class InMemoryGameRepository {
     return backSlashDiagonal.join("");
   }
 
+  getLastPlayer() {
+    return this.grid[this.lastTop][this.lastCol];
+  }
+
   isWinning() {
     if (this.lastCol == -1) return false;
 
-    const lastPlay = this.grid[this.lastTop][this.lastCol];
+    const lastPlay = this.getLastPlayer();
     const streak = `${lastPlay}${lastPlay}${lastPlay}${lastPlay}`;
 
     return (

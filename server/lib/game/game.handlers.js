@@ -11,7 +11,7 @@ const movementSchema = Joi.object().keys({
 });
 
 module.exports = function (components, eventEmitter) {
-  const { userRepository, gameRepository } = components;
+  const { gameRepository } = components;
 
   return {
     startGame: async function (io) {
@@ -79,6 +79,11 @@ module.exports = function (components, eventEmitter) {
       eventEmitter.emit("game:checkRound");
     },
     checkRoundGame: async function (io) {
+      if (gameRepository.isWinning()) {
+        const winnerPlayer = gameRepository.getLastPlayer();
+        io.emit("game:win", { player: winnerPlayer });
+        eventEmitter.emit("game:end");
+      }
     },
   };
 };

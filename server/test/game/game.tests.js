@@ -330,6 +330,175 @@ describe("game states management", () => {
         return done(new Error("should not happen"));
       });
     });
+  });
 
+  describe("win game", () => {
+    it("should win vertical the game", (done) => {
+      const partialDone = createPartialDone(4, done);
+      socket.on("game:win", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.player).to.be.a("number");
+        expect(res.player).to.equal(1);
+        partialDone();
+      });
+      otherSocket.on("game:win", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.player).to.be.a("number");
+        expect(res.player).to.equal(1);
+        partialDone();
+      });
+      socket.on("game:ended", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.ended).to.be.a("boolean");
+        expect(res.ended).to.equal(true);
+        partialDone();
+      });
+      otherSocket.on("game:ended", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.ended).to.be.a("boolean");
+        expect(res.ended).to.equal(true);
+        partialDone();
+      });
+
+      new Promise((resolve) => {
+        socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+          if ("error" in res) return done(new Error("should not happen"));
+          resolve(true);
+        });
+      })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 1 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 1 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 1 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              console.log(res);
+              resolve(next);
+            });
+          });
+        });
+    });
+
+    it("should win horizontal the game", (done) => {
+      const partialDone = createPartialDone(4, done);
+      socket.on("game:win", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.player).to.be.a("number");
+        expect(res.player).to.equal(1);
+        partialDone();
+      });
+      otherSocket.on("game:win", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.player).to.be.a("number");
+        expect(res.player).to.equal(1);
+        partialDone();
+      });
+      socket.on("game:ended", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.ended).to.be.a("boolean");
+        expect(res.ended).to.equal(true);
+        partialDone();
+      });
+      otherSocket.on("game:ended", (res) => {
+        if ("error" in res) return done(new Error("should not happen"));
+        expect(res.ended).to.be.a("boolean");
+        expect(res.ended).to.equal(true);
+        partialDone();
+      });
+
+      new Promise((resolve) => {
+        socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+          if ("error" in res) return done(new Error("should not happen"));
+          resolve(true);
+        });
+      })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 5 }, (res) => {
+              console.log(res);
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 1 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 5 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 2 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            otherSocket.emit("game:play", { id: 2, column: 5 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        })
+        .then((next) => {
+          return new Promise((resolve) => {
+            socket.emit("game:play", { id: 1, column: 3 }, (res) => {
+              if ("error" in res) return done(new Error("should not happen"));
+              resolve(next);
+            });
+          });
+        });
+    });
   });
 });
