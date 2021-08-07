@@ -319,6 +319,29 @@ describe("game states management", () => {
       });
     });
 
+    it("should not play the second round with invalid player", (done) => {
+      const partialDone = createPartialDone(2, done);
+      new Promise((resolve) => {
+        socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+          if ("error" in res) return done(new Error("should not happen"));
+          expect(res.round).to.be.a("number");
+          expect(res.round).to.equal(2);
+          expect(res.position).to.be.an("array");
+          expect(res.position).to.have.members([6, 0]);
+          expect(res.grid).to.be.an("array");
+          partialDone();
+          resolve();
+        });
+      }).then(() => {
+        socket.emit("game:play", { id: 1, column: 0 }, (res) => {
+          if (!("error" in res)) return done(new Error("should not happen"));
+          expect(res.error).to.be.a("string");
+          expect(res.error).to.be.equal("it's not your turn");
+          partialDone();
+        });
+      });
+    });
+
     it("should not play a round with invalid column", (done) => {
       otherSocket.emit("game:play", { id: 1, column: -1 }, (res) => {
         if (!("error" in res)) return done(new Error("should not happen"));
