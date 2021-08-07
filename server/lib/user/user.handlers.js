@@ -1,8 +1,16 @@
 const Joi = require("joi");
 const { mapErrorDetails } = require("../common/utils");
 
-const userSchema = Joi.object().keys({
+const userSchema = Joi.object()
+  .keys({
+    id: Joi.number().valid(1, 2),
+    socketId: Joi.string(),
+  })
+  .or("id", "socketId");
+
+const userConnectSchema = Joi.object().keys({
   id: Joi.number().valid(1, 2).required(),
+  socketId: Joi.string().required(),
 });
 
 module.exports = function (components, eventEmitter) {
@@ -11,7 +19,7 @@ module.exports = function (components, eventEmitter) {
   return {
     connectUser: async function (payload, callback) {
       const socket = this;
-      const { error, value } = userSchema.tailor("connect").validate(payload);
+      const { error, value } = userConnectSchema.validate(payload);
 
       if (error) {
         return callback({
@@ -34,9 +42,8 @@ module.exports = function (components, eventEmitter) {
 
     disconnectUser: async function (payload, callback) {
       const socket = this;
-      const { error, value } = userSchema
-        .tailor("disconnect")
-        .validate(payload);
+      const { error, value } = userSchema.validate(payload);
+
       if (error)
         return callback({
           error: "invalid payload",
@@ -45,12 +52,16 @@ module.exports = function (components, eventEmitter) {
 
       let result;
       try {
-        result = await userRepository.disconnectById(value.id);
+        if (value.id) result = await userRepository.disconnectById(value.id);
+        else {
+          const user= await userRepository.findBySocketId(value.socketId);
+          result = await userRepository.disconnectById(user.id);
+        }
       } catch (e) {
         return callback({ error: e });
       }
       callback({ ...result });
-      socket.broadcast.emit("user:disconnected", value);
+      socket.broadcast.emit("user:disconnected", result);
       eventEmitter.emit("user:disconnected");
     },
 

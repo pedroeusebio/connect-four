@@ -21,12 +21,18 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
     createGameHandlers(components, eventEmitter);
 
   io.on("connection", (socket) => {
-    socket.on("user:connect", connectUser);
+    const socketId = socket.id;
+    socket.on("user:connect", function (payload, callback) {
+      return connectUser.call(this, { ...payload, socketId }, callback);
+    });
     socket.on("user:disconnect", disconnectUser);
     socket.on("user:findAll", findAllUser);
 
     socket.on("game:reset", resetGame);
     socket.on("game:play", dropDisc);
+    socket.on("disconnect", function () {
+      return disconnectUser.call(this, { socketId }, () => null);
+    });
   });
 
   eventEmitter.on("user:connected", function () {
