@@ -433,7 +433,6 @@ describe("game states management", () => {
           return new Promise((resolve) => {
             socket.emit("game:play", { id: 1, column: 0 }, (res) => {
               if ("error" in res) return done(new Error("should not happen"));
-              console.log(res);
               resolve(next);
             });
           });
@@ -476,7 +475,6 @@ describe("game states management", () => {
         .then((next) => {
           return new Promise((resolve) => {
             otherSocket.emit("game:play", { id: 2, column: 5 }, (res) => {
-              console.log(res);
               if ("error" in res) return done(new Error("should not happen"));
               resolve(next);
             });

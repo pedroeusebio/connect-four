@@ -37,7 +37,7 @@ describe("user management", () => {
         if ("error" in res) return done(new Error(res.error));
         expect(res.data).to.be.a("number");
         const storedUser = await userRepository.findById(res.data);
-        expect(storedUser).to.eql({ id: 1 });
+        expect(storedUser.id).to.eql(1);
         partialDone();
       });
 
@@ -88,7 +88,7 @@ describe("user management", () => {
           if ("error" in res) return done(new Error("should not happen"));
           expect(res.data).to.be.a("number");
           const storedUser = await userRepository.findById(res.data);
-          expect(storedUser).to.eql({ id: 1 });
+          expect(storedUser.id).to.eql(1);
           partialDone();
           resolve();
         });
@@ -119,11 +119,11 @@ describe("user management", () => {
           if ("error" in res) return done(new Error(res.error));
           expect(res.data).to.be.a("number");
           const storedUser = await userRepository.findById(res.data);
-          expect(storedUser).to.eql({ id: 1 });
+          expect(storedUser.id).to.eql(1);
           partialDone();
-          resolve();
+          resolve(storedUser.socketId);
         });
-      }).then(() => {
+      }).then((socketId) => {
         socket.emit("user:disconnect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
           expect(res.user).to.be.a("number");
@@ -132,23 +132,35 @@ describe("user management", () => {
             .findById(res.user)
             .catch((e) => e);
           expect(storedUser).to.be.a("string");
+          const storedUserBySocketId = await userRepository
+            .findBySocketId(socketId)
+            .catch((e) => e);
+          expect(storedUserBySocketId).to.be.a("string");
           partialDone();
         });
       });
     });
 
-    it("should not disconnect a user with empty payload", (done) => {
-      socket.emit("user:disconnect", {}, async (res) => {
-        if (!("error" in res)) return done(new Error("should not happen"));
-        expect(res.error).to.eql("invalid payload");
-        expect(res.details).to.eql([
-          { message: '"id" is required', path: ["id"], type: "any.required" },
-        ]);
-        done();
+    it("should disconnect a user with socket disonnect", (done) => {
+      const partialDone = createPartialDone(2, done);
+      new Promise((resolve) => {
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          expect(res.data).to.be.a("number");
+          const storedUser = await userRepository.findById(res.data);
+          expect(storedUser.id).to.eql(1);
+          partialDone();
+          resolve();
+        });
+      }).then(() => {
+        socket.disconnect();
       });
-      otherSocket.on("user:disconnected", () => {
-        done(new Error("should not happen"));
-      });
+        otherSocket.on("user:disconnected", (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          expect(res.user).to.be.a("number");
+          expect(res.user).to.eql(1);
+          partialDone();
+        });
     });
 
     it("should not disconnect a user with invalid id", (done) => {
