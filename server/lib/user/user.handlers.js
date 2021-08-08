@@ -54,7 +54,7 @@ module.exports = function (components, eventEmitter) {
       try {
         if (value.id) result = await userRepository.disconnectById(value.id);
         else {
-          const user= await userRepository.findBySocketId(value.socketId);
+          const user = await userRepository.findBySocketId(value.socketId);
           result = await userRepository.disconnectById(user.id);
         }
       } catch (e) {
@@ -70,12 +70,12 @@ module.exports = function (components, eventEmitter) {
       return callback({ users: result });
     },
 
-    checkAllConnectedUsers: async function (io) {
+    checkAllConnectedUsers: async function () {
       const users = await userRepository.findAll();
       if (users.length == 2) {
-        eventEmitter.emit("game:start");
-      } else if (await gameRepository.isStarted()) {
-        eventEmitter.emit("game:end");
+        eventEmitter.emit("game:enable");
+      } else if (await gameRepository.isEnabled()) {
+        eventEmitter.emit("game:disable");
       }
     },
   };

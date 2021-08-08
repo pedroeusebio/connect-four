@@ -32,13 +32,6 @@ describe("game management", () => {
   describe("start game", function () {
     it("should start the game", (done) => {
       const partialDone = createPartialDone(4, done);
-      socket.on("game:started", async (data) => {
-        expect(data.round).to.be.a("number");
-        expect(data.round).to.equal(1);
-        const gameStarted = await gameRepository.isStarted();
-        expect(gameStarted).to.equal(true);
-        partialDone();
-      });
 
       otherSocket.on("game:started", async (data) => {
         expect(data.round).to.be.a("number");
@@ -48,24 +41,51 @@ describe("game management", () => {
         partialDone();
       });
 
-      socket.emit("user:connect", { id: 1 }, async (res) => {
-        if ("error" in res) return done(new Error(res.error));
+      socket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameStarted = await gameRepository.isEnabled();
+        expect(gameStarted).to.equal(true);
         partialDone();
       });
 
-      otherSocket.emit("user:connect", { id: 2 }, async (res) => {
-        if ("error" in res) return done(new Error(res.error));
+      otherSocket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameEnabled = await gameRepository.isEnabled();
+        expect(gameEnabled).to.equal(true);
         partialDone();
+      });
+
+      new Promise((resolve) => {
+        const partialResolve = createPartialDone(2, resolve);
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+
+        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+      }).then(() => {
+        socket.emit("game:start", {}, async (data) => {
+          expect(data.round).to.be.a("number");
+          expect(data.round).to.equal(1);
+          const gameStarted = await gameRepository.isStarted();
+          expect(gameStarted).to.equal(true);
+          partialDone();
+        });
       });
     });
 
-    it("should not started the game", (done) => {
+    it("should not enable the game", (done) => {
       const partialDone = createPartialDone(2, done);
-      socket.on("game:started", () => {
+      socket.on("game:enabled", () => {
         done(new Error("should not happen"));
       });
 
-      otherSocket.on("game:started", () => {
+      otherSocket.on("game:enabled", () => {
         done(new Error("should not happen"));
       });
 
@@ -84,28 +104,19 @@ describe("game management", () => {
     });
   });
 
-  describe("end the game", () => {
-    it("should end the game", (done) => {
-      const partialDone = createPartialDone(7, done);
-      socket.on("game:started", (res) => {
-        if ("error" in res) return done(new Error(res.error));
+  describe("disable the game", () => {
+    it("should disable a enabled game", (done) => {
+      const partialDone = createPartialDone(3, done);
+
+      otherSocket.on("game:disabled", (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(false);
         partialDone();
       });
 
-      otherSocket.on("game:started", (res) => {
-        if ("error" in res) return done(new Error(res.error));
-        partialDone();
-      });
-
-      otherSocket.on("game:ended", (data) => {
-        expect(data.ended).to.be.a("boolean");
-        expect(data.ended).to.equal(true);
-        partialDone();
-      });
-
-      socket.on("game:ended", (data) => {
-        expect(data.ended).to.be.a("boolean");
-        expect(data.ended).to.equal(true);
+      socket.on("game:disabled", (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(false);
         partialDone();
       });
 
@@ -113,12 +124,10 @@ describe("game management", () => {
         const partialResolve = createPartialDone(2, resolve);
         socket.emit("user:connect", { id: 1 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
-          partialDone();
           partialResolve();
         });
         otherSocket.emit("user:connect", { id: 2 }, async (res) => {
           if ("error" in res) return done(new Error(res.error));
-          partialDone();
           partialResolve();
         });
       }).then(() => {
@@ -129,14 +138,78 @@ describe("game management", () => {
       });
     });
 
-    it("should not end the game", (done) => {
+    it("should disable a started game", (done) => {
+      const partialDone = createPartialDone(7, done);
+      socket.on("game:enabled", (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        partialDone();
+      });
+
+      otherSocket.on("game:enabled", (res) => {
+        if ("error" in res) return done(new Error(res.error));
+        partialDone();
+      });
+
+      otherSocket.on("game:started", async (data) => {
+        if ("error" in data) return done(new Error(data.error));
+        expect(data.round).to.be.a("number");
+        expect(data.round).to.equal(1);
+        const gameStarted = await gameRepository.isStarted();
+        expect(gameStarted).to.equal(true);
+        partialDone();
+      });
+
+      otherSocket.on("game:disabled", (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(false);
+        partialDone();
+      });
+
+      socket.on("game:disabled", (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(false);
+        partialDone();
+      });
+
+      new Promise((resolve) => {
+        const partialResolve = createPartialDone(2, resolve);
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+      })
+        .then(() => {
+          return new Promise((resolve) => {
+            socket.emit("game:start", {}, async (data) => {
+              expect(data.round).to.be.a("number");
+              expect(data.round).to.equal(1);
+              const gameStarted = await gameRepository.isStarted();
+              expect(gameStarted).to.equal(true);
+              partialDone();
+              resolve(true);
+            });
+          });
+        })
+        .then(() => {
+          socket.emit("user:disconnect", { id: 1 }, async (res) => {
+            if ("error" in res) return done(new Error(res.error));
+            partialDone();
+          });
+        });
+    });
+
+    it("should not disable the game", (done) => {
       const partialDone = createPartialDone(2, done);
 
-      socket.on("game:ended", () => {
+      socket.on("game:disabled", () => {
         done(new Error("should not happen"));
       });
 
-      otherSocket.on("game:ended", () => {
+      otherSocket.on("game:disabled", () => {
         done(new Error("should not happen"));
       });
 
@@ -160,29 +233,38 @@ describe("game management", () => {
 });
 
 describe("game states management", () => {
-  let httpServer, socket, otherSocket, gameRepository;
+  let httpServer, socket, otherSocket;
   beforeEach((done) => {
-    const partialDone = createPartialDone(2, done);
     httpServer = createServer();
     const { components } = createApplication(httpServer);
     gameRepository = components.gameRepository;
     httpServer.listen(() => {
       const port = httpServer.address().port;
       socket = io(`http://localhost:${port}`);
-      new Promise((resolve) => socket.on("connect", resolve)).then(() => {
-        socket.emit("user:connect", { id: 1 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          partialDone();
-        });
-      });
-
       otherSocket = io(`http://localhost:${port}`);
-      new Promise((resolve) => otherSocket.on("connect", resolve)).then(() => {
-        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
-          if ("error" in res) return done(new Error(res.error));
-          partialDone();
+      new Promise((resolve) => {
+        const partialResolve = createPartialDone(2, resolve);
+        socket.on("connect", partialResolve);
+        otherSocket.on("connect", partialResolve);
+      })
+        .then(() => {
+          return new Promise((resolve) => {
+            const partialResolve = createPartialDone(2, resolve);
+            socket.emit("user:connect", { id: 1 }, async (res) => {
+              if ("error" in res) return done(new Error(res.error));
+              partialResolve();
+            });
+            otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+              if ("error" in res) return done(new Error(res.error));
+              partialResolve();
+            });
+          });
+        })
+        .then(() => {
+          socket.emit("game:start", {}, async () => {
+            done();
+          });
         });
-      });
     });
   });
 
@@ -215,17 +297,17 @@ describe("game states management", () => {
         done(new Error("should not happen"));
       });
 
-      socket.emit("game:reset", { id: 4 }, (res) => {
-        if (!("error" in res)) return done(new Error("should not happen"));
-        expect(res.error).to.eql("invalid payload");
-        expect(res.details).to.eql([
-          {
-            message: '"id" must be one of [1, 2]',
-            path: ["id"],
-            type: "any.only",
-          },
-        ]);
-        done();
+      new Promise((resolve) => {
+        socket.emit("user:disconnect", { id: 1 }, (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          resolve();
+        });
+      }).then(() => {
+        socket.emit("game:reset", {}, (res) => {
+          if (!("error" in res)) return done(new Error("should not happen"));
+          expect(res.error).to.eql("socket id not found");
+          done();
+        });
       });
     });
 
@@ -236,7 +318,7 @@ describe("game states management", () => {
       });
 
       new Promise((resolve) => {
-        socket.emit("user:disconnect", { id: 1 }, (res) => {
+        otherSocket.emit("user:disconnect", { id: 2 }, (res) => {
           if ("error" in res) return done(new Error(res.error));
           partialDone();
           resolve();

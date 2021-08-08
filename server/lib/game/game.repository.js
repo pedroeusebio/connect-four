@@ -8,6 +8,7 @@ module.exports = class InMemoryGameRepository {
   lastCol = -1;
   lastTop = -1;
   started = false;
+  enabled = false;
 
   constructor() {
     this.width = 6;
@@ -26,6 +27,19 @@ module.exports = class InMemoryGameRepository {
 
   isStarted() {
     return Promise.resolve(this.started);
+  }
+
+  isEnabled() {
+    return Promise.resolve(this.enabled);
+  }
+
+  enable() {
+    this.enabled = true;
+  }
+
+  async disable() {
+    this.enabled = false;
+    if (await this.isStarted()) return this.end();
   }
 
   start() {

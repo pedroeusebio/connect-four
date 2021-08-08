@@ -17,8 +17,15 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
   const { connectUser, disconnectUser, findAllUser, checkAllConnectedUsers } =
     createUserHandlers(components, eventEmitter);
 
-  const { startGame, endGame, resetGame, dropDisc, checkRoundGame } =
-    createGameHandlers(components, eventEmitter);
+  const {
+    enableGame,
+    disableGame,
+    startGame,
+    endGame,
+    resetGame,
+    dropDisc,
+    checkRoundGame,
+  } = createGameHandlers(components, eventEmitter);
 
   io.on("connection", (socket) => {
     const socketId = socket.id;
@@ -28,7 +35,12 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
     socket.on("user:disconnect", disconnectUser);
     socket.on("user:findAll", findAllUser);
 
-    socket.on("game:reset", resetGame);
+    socket.on("game:start", function (payload, callback) {
+      return startGame.call(this, { socketId }, callback);
+    });
+    socket.on("game:reset", function (payload, callback) {
+      return resetGame.call(this, { socketId }, callback);
+    });
     socket.on("game:play", dropDisc);
     socket.on("disconnect", function () {
       return disconnectUser.call(this, { socketId }, () => null);
@@ -36,15 +48,19 @@ module.exports = function createApplication(httpServer, serverOptions = {}) {
   });
 
   eventEmitter.on("user:connected", function () {
-    return checkAllConnectedUsers(io);
+    return checkAllConnectedUsers();
   });
 
   eventEmitter.on("user:disconnected", function () {
-    return checkAllConnectedUsers(io);
+    return checkAllConnectedUsers();
   });
 
-  eventEmitter.on("game:start", function () {
-    return startGame(io);
+  eventEmitter.on("game:enable", function () {
+    return enableGame(io);
+  });
+
+  eventEmitter.on("game:disable", function () {
+    return disableGame(io);
   });
 
   eventEmitter.on("game:end", function () {
