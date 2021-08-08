@@ -23,23 +23,19 @@ export default function Home({ socket }) {
   useEffect(() => {
     socket.emit("user:findAll", {}, (res) => {
       if ("error" in res) alert(res.error);
-      console.log(res);
       res.users.forEach((user) => {
         if (user.id === 1) setPlayerOne(true);
         else if (user.id === 2) setPlayerTwo(true);
       });
     });
     socket.on("user:connected", (user) => {
-      console.log("user:connected");
       if (user.id === 1) setPlayerOne(true);
       else if (user.id === 2) setPlayerTwo(true);
     });
 
-    socket.on("user:disconnected", (user) => {
-      console.log("user:disconnected");
-
-      if (user.id === 1) setPlayerOne(false);
-      else if (user.id === 2) setPlayerTwo(false);
+    socket.on("user:disconnected", (data) => {
+      if (data.user === 1) setPlayerOne(false);
+      else if (data.user === 2) setPlayerTwo(false);
     });
   }, [socket]);
 
@@ -79,27 +75,5 @@ export default function Home({ socket }) {
         </Grid>
       </Grid>
     </div>
-    //<Grid
-    //container
-    //spacing={0}
-    //direction="column"
-    //alignItems="center"
-    //justifyContent="center"
-    //style={{ minHeight: "100vh" }}
-    //>
-    //<Grid
-    //container
-
-    //direction="row"
-    //justifyContent="space-between"
-    //>
-    //<Button variant="contained" color="primary">
-    //<Link to="/game/1"> Player 1</Link>
-    //</Button>
-    //<Button variant="contained" color="secondary">
-    //<Link to="/game/2"> Player 2</Link>
-    //</Button>
-    //</Grid>
-    //</Grid>
   );
 }

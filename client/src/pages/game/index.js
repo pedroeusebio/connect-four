@@ -1,5 +1,9 @@
 import { useHistory, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { ChakraProvider, Heading, VStack } from "@chakra-ui/react";
+import { Board } from "../../components/Board.js";
+import { Button } from "@chakra-ui/react";
+import * as gameStyles from "../../styles/game.module.css";
 
 const useUnload = (fn) => {
   const cb = useRef(fn);
@@ -17,13 +21,11 @@ export default function Game({ socket }) {
   const { id } = useParams();
   let history = useHistory();
   const [isConnected, setIsConnected] = useState(false);
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
-  const disconnect = () => {
+  const disconnect = (id) => {
     socket.emit("user:disconnect", { id }, (res) => {
-      if ("error" in res) {
-        return alert(res.error);
-      }
-      console.log("disconnected");
+      if ("error" in res) return alert(res.error);
       setIsConnected(false);
     });
   };
@@ -36,12 +38,36 @@ export default function Game({ socket }) {
         alert(res.error);
         return history.push("/");
       }
-      console.log("connected");
       setIsConnected(true);
     });
 
-    return () => disconnect();
-  }, []);
+    socket.on("game:started", (res) => {
+      setIsGameStarted(true);
+    });
+    socket.on("game:ended", (res) => {
+      setIsGameStarted(false);
+    });
 
-  return <h2> Player {id}</h2>;
+    return () => {
+      socket.off("game:started");
+      socket.off("game:ended");
+      return disconnect(id);
+    };
+  }, [socket, id, history, disconnect]);
+
+  return (
+    <ChakraProvider>
+      <VStack spacing="3rem">
+        <Heading>Connect 4</Heading>
+        <Button
+          colorScheme="purple"
+          className={gameStyles.button}
+          disabled={!isGameStarted}
+        >
+          Reset Game
+        </Button>
+        <Board />;
+      </VStack>
+    </ChakraProvider>
+  );
 }

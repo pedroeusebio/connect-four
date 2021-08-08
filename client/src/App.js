@@ -12,10 +12,10 @@ export default function App() {
     <Router>
       <Switch>
         <Route exact path="/">
-          <Home socket={socket}/>
+          <Home socket={socket} />
         </Route>
         <Route path="/game/:id">
-          <Game socket={socket}/>
+          <Game socket={socket} />
         </Route>
       </Switch>
     </Router>
