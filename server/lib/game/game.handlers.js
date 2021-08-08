@@ -1,10 +1,6 @@
 const Joi = require("joi");
 const { mapErrorDetails } = require("../common/utils");
 
-const userSchema = Joi.object().keys({
-  socketId: Joi.string().required(),
-});
-
 const movementSchema = Joi.object().keys({
   id: Joi.number().valid(1, 2).required(),
   column: Joi.number().required(),
@@ -24,16 +20,9 @@ module.exports = function (components, eventEmitter) {
     },
     startGame: async function (payload, callback) {
       const socket = this;
-      const { error, value } = userSchema.validate(payload);
-
-      if (error)
-        return callback({
-          error: "invalid payload",
-          details: mapErrorDetails(error.details),
-        });
 
       try {
-        await userRepository.findBySocketId(value.socketId);
+        await userRepository.findBySocketId(payload.socketId);
       } catch (e) {
         return callback({ error: e });
       }
@@ -56,16 +45,9 @@ module.exports = function (components, eventEmitter) {
     },
     resetGame: async function (payload, callback) {
       const socket = this;
-      const { error, value } = userSchema.validate(payload);
-
-      if (error)
-        return callback({
-          error: "invalid payload",
-          details: mapErrorDetails(error.details),
-        });
-
+      
       try {
-        await userRepository.findBySocketId(value.socketId);
+        await userRepository.findBySocketId(payload.socketId);
       } catch (e) {
         return callback({ error: e });
       }

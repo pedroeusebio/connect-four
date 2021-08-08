@@ -79,6 +79,55 @@ describe("game management", () => {
       });
     });
 
+    it("should not start the game", (done) => {
+      const partialDone = createPartialDone(3, done);
+
+      socket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameStarted = await gameRepository.isEnabled();
+        expect(gameStarted).to.equal(true);
+        partialDone();
+      });
+
+      otherSocket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameEnabled = await gameRepository.isEnabled();
+        expect(gameEnabled).to.equal(true);
+        partialDone();
+      });
+
+      new Promise((resolve) => {
+        const partialResolve = createPartialDone(2, resolve);
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+
+        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+      })
+        .then(() => {
+          return new Promise((resolve) => {
+            socket.emit("user:disconnect", { id: 1 }, async (res) => {
+              if ("error" in res) return done(new Error(res.error));
+              resolve(true);
+            });
+          });
+        })
+        .then(() => {
+          socket.emit("game:start", {}, async (res) => {
+            if (!("error" in res)) return done(new Error("should not happen"));
+            expect(res.error).to.be.a("string");
+            expect(res.error).to.equal("socket id not found");
+            partialDone();
+          });
+        });
+    });
+
     it("should not enable the game", (done) => {
       const partialDone = createPartialDone(2, done);
       socket.on("game:enabled", () => {
@@ -101,6 +150,68 @@ describe("game management", () => {
         expect(res.data).to.eql(1);
         partialDone();
       });
+    });
+
+    it("should not start the game twice", (done) => {
+      const partialDone = createPartialDone(5, done);
+
+      otherSocket.on("game:started", async (data) => {
+        expect(data.round).to.be.a("number");
+        expect(data.round).to.equal(1);
+        const gameStarted = await gameRepository.isStarted();
+        expect(gameStarted).to.equal(true);
+        partialDone();
+      });
+
+      socket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameStarted = await gameRepository.isEnabled();
+        expect(gameStarted).to.equal(true);
+        partialDone();
+      });
+
+      otherSocket.on("game:enabled", async (data) => {
+        expect(data.enabled).to.be.a("boolean");
+        expect(data.enabled).to.equal(true);
+        const gameEnabled = await gameRepository.isEnabled();
+        expect(gameEnabled).to.equal(true);
+        partialDone();
+      });
+
+      new Promise((resolve) => {
+        const partialResolve = createPartialDone(2, resolve);
+        socket.emit("user:connect", { id: 1 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+
+        otherSocket.emit("user:connect", { id: 2 }, async (res) => {
+          if ("error" in res) return done(new Error(res.error));
+          partialResolve();
+        });
+      })
+        .then(() => {
+          return new Promise((resolve) => {
+            socket.emit("game:start", {}, async (data) => {
+              expect(data.round).to.be.a("number");
+              expect(data.round).to.equal(1);
+              const gameStarted = await gameRepository.isStarted();
+              expect(gameStarted).to.equal(true);
+              partialDone();
+              resolve(true);
+            });
+          });
+        })
+        .then(() => {
+          console.log("chame");
+          socket.emit("game:start", {}, async (res) => {
+            if (!("error" in res)) return done(new Error("should not happen"));
+            expect(res.error).to.be.a("string");
+            expect(res.error).to.equal("game already started");
+            partialDone();
+          });
+        });
     });
   });
 
