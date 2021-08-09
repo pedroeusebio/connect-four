@@ -5,7 +5,9 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "npx nyc mocha test/**/*.js",
-    "start": "node lib/index.js"
+    "start": "node lib/index.js",
+    "docker": "docker build -t connect4-server .",
+    "run-docker": "docker run -p 4000:80 connect4-server"
   },
   "keywords": [],
   "author": "",
