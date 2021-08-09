@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Heading, Center, Text, VStack } from "@chakra-ui/react";
-import * as homeStyles from "../../styles/home.module.css";
+import * as gameStyles from "../../styles/game.module.css";
+
 
 export default function Home({ socket }) {
   const [playerOne, setPlayerOne] = useState(false);
@@ -35,7 +36,7 @@ export default function Home({ socket }) {
           <Center h="15vw" w="30vw">
             <Button
               colorScheme="red"
-              className={homeStyles.button}
+              className={gameStyles.button}
               disabled={playerOne}
               style={{ marginRight: "40px" }}
             >
@@ -45,7 +46,7 @@ export default function Home({ socket }) {
             </Button>
             <Button
               colorScheme="yellow"
-              className={homeStyles.button}
+              className={gameStyles.button}
               disabled={playerTwo}
             >
               <Link to="/game/2">
