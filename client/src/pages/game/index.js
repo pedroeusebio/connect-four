@@ -1,7 +1,7 @@
 import { useHistory, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Board } from "../../components/Board.js";
-import { Button, Heading  } from "@chakra-ui/react";
+import { Button, Heading } from "@chakra-ui/react";
 import * as gameStyles from "../../styles/game.module.css";
 
 const useUnload = (fn) => {
