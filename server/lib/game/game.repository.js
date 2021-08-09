@@ -46,13 +46,13 @@ module.exports = class InMemoryGameRepository {
     if (this.started) return Promise.reject("game already started");
     this.started = true;
     this.resetGrid();
-    return Promise.resolve({ round: this.getPlayerRound() });
+    return Promise.resolve({ round: this.getPlayerRound(), grid: this.grid });
   }
 
   reset() {
     if (!this.started) return Promise.reject("game not started yet");
     this.resetGrid();
-    return Promise.resolve({ round: this.getPlayerRound() });
+    return Promise.resolve({ round: this.getPlayerRound(), grid: this.grid });
   }
 
   end() {
@@ -135,6 +135,5 @@ module.exports = class InMemoryGameRepository {
         return Promise.resolve({ position: [h, column], grid: this.grid });
       }
     }
-    return Promise.reject("invalid column");
   }
 };
