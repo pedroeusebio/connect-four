@@ -1,8 +1,7 @@
 import { useHistory, useParams } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChakraProvider, Heading, VStack } from "@chakra-ui/react";
 import { Board } from "../../components/Board.js";
-import { Button } from "@chakra-ui/react";
+import { Button, Heading  } from "@chakra-ui/react";
 import * as gameStyles from "../../styles/game.module.css";
 
 const useUnload = (fn) => {
@@ -125,31 +124,29 @@ export default function Game({ socket }) {
   }, [socket, id, history, disconnect]);
 
   return (
-    <ChakraProvider>
-      <VStack spacing="3rem">
-        <Heading>Connect 4</Heading>
-        {isGameEnabled && (
-          <Button
-            colorScheme="purple"
-            className={gameStyles.button}
-            disabled={!isGameStarted}
-            onClick={sendResetGame}
-          >
-            Reset Game
-          </Button>
-        )}
-        {!isGameStarted && isUserConnected && (
-          <Button
-            colorScheme="green"
-            className={gameStyles.button}
-            disabled={!isGameEnabled}
-            onClick={sendStartGame}
-          >
-            New Game
-          </Button>
-        )}
-        {isGameStarted && <Board grid={grid} message={message} play={play} />};
-      </VStack>
-    </ChakraProvider>
+    <>
+      <Heading>Connect 4</Heading>
+      {isGameEnabled && (
+        <Button
+          colorScheme="purple"
+          className={gameStyles.button}
+          disabled={!isGameStarted}
+          onClick={sendResetGame}
+        >
+          Reset Game
+        </Button>
+      )}
+      {!isGameStarted && isUserConnected && (
+        <Button
+          colorScheme="green"
+          className={gameStyles.button}
+          disabled={!isGameEnabled}
+          onClick={sendStartGame}
+        >
+          New Game
+        </Button>
+      )}
+      {isGameStarted && <Board grid={grid} message={message} play={play} />}
+    </>
   );
 }
