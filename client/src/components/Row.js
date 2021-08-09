@@ -1,5 +1,5 @@
 import { Flex } from "@chakra-ui/layout";
-import * as styles from '../styles/game.module.css';
+import * as styles from "../styles/game.module.css";
 
 const Cell = ({ value, columnIndex, play }) => {
   let color = "whiteCircle";

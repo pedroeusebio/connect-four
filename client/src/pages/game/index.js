@@ -51,7 +51,6 @@ export default function Game({ socket }) {
     });
   };
 
-
   const play = (c) => {
     if (parseInt(id) !== currentPlayer)
       return setMessage("it's not your turn yet");
